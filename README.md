@@ -1,5 +1,5 @@
 # LdapMapper
-
+[![Build Status](https://secure.travis-ci.org/rlyon/ldap_mapper.png)](http://travis-ci.org/rlyon/ldap_mapper)
 TODO: Write a gem description
 
 ## Installation
