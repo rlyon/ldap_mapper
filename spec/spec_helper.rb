@@ -6,10 +6,10 @@ require 'mocha_standalone'
 class LdapFakeUser
   include LdapMapper::Base
   base "ou=people,dc=example,dc=com"
+  identifier "uid"
   objectclass "posixAccount"
   objectclass "shadowAccount"
   objectclass "inetOrgPerson"
-  attribute :dn,            :map => "dn"
   attribute :username,      :map => "uid"
   attribute :common_name,   :map => "cn"
   attribute :first_name,    :map => "givenname"
@@ -22,7 +22,7 @@ end
 
 class LdapTestUser
   include LdapMapper::Base
-  base "uid=test,dc=example,dc=com"
+  base "ou=test,dc=example,dc=com"
   objectclass "posixAccount"
   objectclass "shadowAccount"
   objectclass "inetOrgPerson"

@@ -206,8 +206,6 @@ describe "LdapMapper::Base: " do
   it "should load all entries from an ldap search" do
     entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
     LdapFakeUser.connection.expects(:search).multiple_yields(*entries)
-    #Net::LDAP.expects(:search).multiple_yields(*entries)
-    #LdapFakeUser.connection.stubs(:search).returns(entries)
     users = LdapFakeUser.all
     users.size.should == 3
     user = users[0]
@@ -234,5 +232,16 @@ describe "LdapMapper::Base: " do
     user.email.should == "sock@example.com"
     user.last_change.should == Time.at(1348617600)
     user.uid_number == 1002
+  end
+
+  it "should have a dn created from the base and the default identifier" do
+    @user.common_name = "Test User"
+    expect { @user.dn.should }.to raise_error
+  end
+
+  it "should hace a dn created from the base and the set identifier" do
+    user = LdapFakeUser.new
+    user.username = "mock"
+    user.dn.should == "uid=mock,ou=people,dc=example,dc=com"
   end
 end

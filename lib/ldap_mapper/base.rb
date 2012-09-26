@@ -112,6 +112,8 @@ module LdapMapper
 
         @attributes ||= []
         @attributes |= [name]
+        @mappings ||= {}
+        @mappings[name] = options[:map] ? options[:map] : name
       end
 
       def base(type)
@@ -127,6 +129,22 @@ module LdapMapper
         @conn ||= ldap_connection
       end
 
+      def find(id)
+        # get identifier and base
+        # create the dn
+        # perform the search
+        # if an entry was returned, instantiate the object and import_attributes
+        # if not return nil
+      end
+
+      def identifier(id)
+        class_eval <<-EOS, __FILE__, __LINE__
+          def identifier
+            "#{id.to_s}"
+          end
+        EOS
+        @identifier = id
+      end
 
       def ldap_connection
         ldap = Net::LDAP.new
@@ -136,6 +154,10 @@ module LdapMapper
         ldap
       end
 
+      def mappings
+        @mappings ||= {}
+      end
+
       def objectclasses
         @objectclasses ||= []
       end
@@ -143,8 +165,17 @@ module LdapMapper
       def objectclass(name)
         objectclasses << name 
       end
+
+      def reverse_map
+        @inverted_mappings ||= @mappings.invert
+      end
     end
 
+    ####
+    ####
+    #### INSTANCE METHODS
+    ####
+    ####
     def initialize(attrs={})
       @conn = self.class.connection
       attrs.each do |key, value|
@@ -156,8 +187,20 @@ module LdapMapper
       @attributes ||= {}
     end
 
+    def base
+      raise "Base must be defined before using."
+    end
+
     def connection
       @conn ||= self.class.connection
+    end
+
+    def dn
+      "#{self.identifier}=#{attributes[self.class.reverse_map[self.identifier]]},#{self.base}"
+    end
+
+    def identifier
+      raise "Identifier must be defined before using."
     end
 
     def import_attributes(entry)
@@ -180,6 +223,17 @@ module LdapMapper
         ret[send("#{attr}_mapping")] = send("#{attr}_convert") unless attributes[attr].nil?
         ret
       end
+    end
+
+    def mappings
+      @mappings ||= {}
+    end
+
+    def save
+      # Gather objectclasses
+      # Gather mapped and converted attributes
+      # Create a modlist
+      # Perform LDAP modify
     end
   end
 end
