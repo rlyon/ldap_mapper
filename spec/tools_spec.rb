@@ -19,7 +19,7 @@ foo: foo
 bar: bar
 bar: baz}
     )
-    entry.to_hash.should == {'dn' => ['mydn'], 'foo' => ['foo'], 'bar' => ['bar','baz']}
+    LdapMapper::Tools.to_hash(entry).should == {'dn' => ['mydn'], 'foo' => ['foo'], 'bar' => ['bar','baz']}
   end
 
   it "should return a hash of compressed values" do
@@ -30,6 +30,6 @@ foo: foo
 bar: bar
 bar: baz}
     )
-    entry.to_hash(:compress => true).should == {'dn' => 'mydn', 'foo' => 'foo', 'bar' => ['bar','baz']}
+    LdapMapper::Tools.to_hash(entry, :compress => true).should == {'dn' => 'mydn', 'foo' => 'foo', 'bar' => ['bar','baz']}
   end
 end

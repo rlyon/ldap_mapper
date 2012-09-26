@@ -1,7 +1,8 @@
-require "ldap_mapper/version"
-require "ldap_mapper/base"
 require "net/ldap"
 require "base64"
+require "ldap_mapper/version"
+require "ldap_mapper/base"
+require "ldap_mapper/tools"
 
 module LdapMapper
   # Your code goes here...

@@ -225,7 +225,7 @@ module LdapMapper
     end
 
     def import_attributes(entry)
-      hash = entry.is_a?(Net::LDAP::Entry) ? entry.to_hash(:compress => true) : entry
+      hash = entry.is_a?(Net::LDAP::Entry) ? LdapMapper::Tools.to_hash(entry,:compress => true) : entry
       begin
         self.class.attributes.each do |attr|
           #TODO should only iterate through hash array
