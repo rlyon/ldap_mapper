@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'ldap_mapper'
+require 'mocha_standalone'
 
 class LdapFakeUser
   include LdapMapper::Base
@@ -40,5 +41,7 @@ def check_password(password, ssha)
 end
 
 RSpec.configure do |config|
-  config.mock_with :mocha
+  config.mock_with        :mocha
+  config.color_enabled =  true
+  config.formatter     =  'documentation'
 end

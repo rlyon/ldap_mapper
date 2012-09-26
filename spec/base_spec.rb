@@ -202,4 +202,37 @@ describe "LdapMapper::Base: " do
   it "should contain the object class information" do
     LdapTestUser.objectclasses.should == ["posixAccount","shadowAccount","inetOrgPerson"]
   end
+
+  it "should load all entries from an ldap search" do
+    entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
+    LdapFakeUser.connection.expects(:search).multiple_yields(*entries)
+    #Net::LDAP.expects(:search).multiple_yields(*entries)
+    #LdapFakeUser.connection.stubs(:search).returns(entries)
+    users = LdapFakeUser.all
+    users.size.should == 3
+    user = users[0]
+    user.username.should == "mock"
+    user.common_name.should == "Mock User"
+    user.first_name.should == "Mock"
+    user.last_name.should == "User"
+    user.email.should == "mock@example.com"
+    user.last_change.should == Time.at(1348617600)
+    user.uid_number == 1000
+    user = users[1]
+    user.username.should == "rock"
+    user.common_name.should == "Rock User"
+    user.first_name.should == "Rock"
+    user.last_name.should == "User"
+    user.email.should == "rock@example.com"
+    user.last_change.should == Time.at(1348617600)
+    user.uid_number == 1001
+    user = users[2]
+    user.username.should == "sock"
+    user.common_name.should == "Sock User"
+    user.first_name.should == "Sock"
+    user.last_name.should == "User"
+    user.email.should == "sock@example.com"
+    user.last_change.should == Time.at(1348617600)
+    user.uid_number == 1002
+  end
 end

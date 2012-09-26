@@ -10,6 +10,21 @@ module LdapMapper
         new(Marshal.load(marshalled))
       end
 
+      def all(options = {})
+        objs = []
+        unless @base.nil?
+          filter = Net::LDAP::Filter.eq("objectclass", "*")
+          connection.search(:base => @base, :filter => filter, :return_result => false) do |entry|
+            obj = self.new
+            obj.import_attributes(entry)
+            objs << obj
+          end
+          objs
+        else
+          raise "Base not set"
+        end
+      end
+
       def attributes
         @attributes ||= []
       end
@@ -105,7 +120,7 @@ module LdapMapper
             "#{type.to_s}"
           end
         EOS
-        @control = type.to_s
+        @base = type.to_s
       end
 
       def connection

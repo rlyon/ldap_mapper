@@ -35,7 +35,7 @@ uid: sock
 cn: Sock User
 givenName: Sock
 sn: User
-mail: mock@example.com
+mail: sock@example.com
 uidNumber: 1002
 userPassword: {SSHA}2mO7Uxll0a1/7+sMOzb7hYXD5lsxMjM0YWJjZA==
 shadowLastChange: 15609
