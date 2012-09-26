@@ -10,35 +10,6 @@ module LdapMapper
         new(Marshal.load(marshalled))
       end
 
-      def base(type)
-        class_eval <<-EOS, __FILE__, __LINE__
-          def base
-            "#{type.to_s}"
-          end
-        EOS
-        @control = type.to_s
-      end
-
-      def objectclasses
-        @objectclasses ||= []
-      end
-
-      def objectclass(name)
-        objectclasses << name 
-      end
-
-      def connection
-        @conn ||= ldap_connection
-      end
-
-      def ldap_connection
-        ldap = Net::LDAP.new
-        ldap.host = LDAP_MAPPER_HOST
-        ldap.port = LDAP_MAPPER_PORT
-        ldap.auth LDAP_MAPPER_ADMIN, LDAP_MAPPER_ADMIN_PASSWORD
-        ldap
-      end
-
       def attributes
         @attributes ||= []
       end
@@ -126,6 +97,36 @@ module LdapMapper
 
         @attributes ||= []
         @attributes |= [name]
+      end
+
+      def base(type)
+        class_eval <<-EOS, __FILE__, __LINE__
+          def base
+            "#{type.to_s}"
+          end
+        EOS
+        @control = type.to_s
+      end
+
+      def connection
+        @conn ||= ldap_connection
+      end
+
+
+      def ldap_connection
+        ldap = Net::LDAP.new
+        ldap.host = LDAP_MAPPER_HOST
+        ldap.port = LDAP_MAPPER_PORT
+        ldap.auth LDAP_MAPPER_ADMIN, LDAP_MAPPER_ADMIN_PASSWORD
+        ldap
+      end
+
+      def objectclasses
+        @objectclasses ||= []
+      end
+
+      def objectclass(name)
+        objectclasses << name 
       end
     end
 
