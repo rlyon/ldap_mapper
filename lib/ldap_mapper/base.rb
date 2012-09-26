@@ -64,7 +64,7 @@ module LdapMapper
         when :password
           class_eval <<-EOS, __FILE__, __LINE__
             def #{name}=(new_#{name})
-              if new_#{name} =~ /^\{SSHA\}/
+              if new_#{name} =~ /^\\{SSHA\\}/
                 attributes[:#{name}] = nil
                 attributes[:#{name}_encrypted] = new_#{name}
               else
