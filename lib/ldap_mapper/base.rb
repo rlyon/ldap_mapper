@@ -99,8 +99,7 @@ module LdapMapper
 
         class_eval <<-EOS, __FILE__, __LINE__
           def self.find_by_#{name}(query)
-            #where(:#{name} => query).first
-            nil
+            where(:#{name} => query)
           end
         EOS
 
@@ -130,11 +129,33 @@ module LdapMapper
       end
 
       def find(id)
-        # get identifier and base
-        # create the dn
-        # perform the search
-        # if an entry was returned, instantiate the object and import_attributes
-        # if not return nil
+        dn = "#{@identifier}=#{id},#{@base}"
+        filter = Net::LDAP::Filter.eq(@identifier, id)
+        results = connection.search(:base => @base, :filter => filter) 
+        if results
+          obj = self.new
+          obj.import_attributes(results.first)
+        else
+          nil
+        end
+      end
+
+      def where(type, options = {})
+        objs = []
+        # TODO: This is just temporary.  I need to create my own search strings and use
+        # the construct method for Net::LDAP::Filter
+        dn = "#{@identifier}=#{id},#{@base}"
+        # Again, this is a temporary hack
+        key = options.keys.first
+        attr = @mapping[key]
+        value = options[key]
+        filter = Net::LDAP::Filter.send(type, attr, value)
+        connection.search(:base => @base, :filter => filter, :return_result => false) do |entry|
+          obj = self.new
+          obj.import_attributes(entry)
+          objs << obj
+        end
+        objs
       end
 
       def identifier(id)
