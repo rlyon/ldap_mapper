@@ -1,20 +1,5 @@
 require File.dirname(__FILE__) + '/spec_helper'
 
-class LdapTestUser
-  include LdapMapper::Base
-  base "uid=test,dc=example,dc=com"
-  objectclass "posixAccount"
-  objectclass "shadowAccount"
-  objectclass "inetOrgPerson"
-  attribute :username,      :map => "uid"
-  attribute :common_name,   :map => "cn"
-  attribute :email,         :map => "mail"
-  attribute :uid_number,    :map => "uidNumber", :type => :integer
-  attribute :group_number,  :map => "gidNumber", :type => :integer
-  attribute :last_change,   :map => "shadowLastChange", :type => :epoch_days
-  attribute :password,      :map => "userPassword", :type => :password
-end
-
 describe "LdapMapper::Base: " do
   before(:all) do
     LDAP_MAPPER_HOST="localhost"
@@ -178,6 +163,19 @@ describe "LdapMapper::Base: " do
       :group_number => 1000,
       :last_change => Time.at(1348617600)
     }
+  end
+
+  it "should import attributes from a Net::LDAP::Entry object" do
+    user = LdapFakeUser.new
+    entry = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries.first
+    user.import_attributes(entry)
+    user.username.should == "mock"
+    user.common_name.should == "Mock User"
+    user.first_name.should == "Mock"
+    user.last_name.should == "User"
+    user.email.should == "mock@example.com"
+    user.last_change.should == Time.at(1348617600)
+    user.uid_number == 1000
   end
 
   it "should allow an epoch_days type to accept Time and Integer (or somthing that can be casted to an Integer)" do

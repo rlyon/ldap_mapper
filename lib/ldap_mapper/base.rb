@@ -144,12 +144,13 @@ module LdapMapper
       @conn ||= self.class.connection
     end
 
-    def import_attributes(import)
+    def import_attributes(entry)
+      hash = entry.is_a?(Net::LDAP::Entry) ? entry.to_hash(:compress => true) : entry
       begin
         self.class.attributes.each do |attr|
-          #TODO should only iterate through import array
+          #TODO should only iterate through hash array
           mapped = send("#{attr}_mapping")
-          send("#{attr}=", import[mapped]) if import.include?(mapped)
+          send("#{attr}=", hash[mapped]) if hash.include?(mapped)
         end
         true
       rescue

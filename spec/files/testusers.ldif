@@ -1,0 +1,41 @@
+dn: uid=mock,ou=people,dc=example,dc=com
+objectClass: top
+objectClass: inetorgperson
+objectClass: posixaccount
+objectClass: shadowaccount
+uid: mock
+cn: Mock User
+givenName: Mock
+sn: User
+mail: mock@example.com
+uidNumber: 1000
+userPassword: {SSHA}2mO7Uxll0a1/7+sMOzb7hYXD5lsxMjM0YWJjZA==
+shadowLastChange: 15609
+
+dn: uid=rock,ou=people,dc=example,dc=com
+objectClass: top
+objectClass: inetorgperson
+objectClass: posixaccount
+objectClass: shadowaccount
+uid: rock
+cn: Rock User
+givenName: Rock
+sn: User
+mail: rock@example.com
+uidNumber: 1001
+userPassword: {SSHA}2mO7Uxll0a1/7+sMOzb7hYXD5lsxMjM0YWJjZA==
+shadowLastChange: 15609
+
+dn: uid=sock,ou=people,dc=example,dc=com
+objectClass: top
+objectClass: inetorgperson
+objectClass: posixaccount
+objectClass: shadowaccount
+uid: sock
+cn: Sock User
+givenName: Sock
+sn: User
+mail: mock@example.com
+uidNumber: 1002
+userPassword: {SSHA}2mO7Uxll0a1/7+sMOzb7hYXD5lsxMjM0YWJjZA==
+shadowLastChange: 15609

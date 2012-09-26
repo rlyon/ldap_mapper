@@ -21,3 +21,20 @@ class Net::LDAP::Password
     end
   end
 end
+
+class Net::LDAP::Entry
+  def to_hash(options = {})
+    compress = options.include?(:compress) ? options[:compress] : false
+    hash = {}
+    self.attribute_names.each do |name|
+      name_s = name.to_s
+      if compress
+        value = (self[name_s].size > 1) ? self[name_s] : self[name_s].first
+      else
+        value = self[name_s]
+      end
+      hash[name_s] = value
+    end
+    hash
+  end
+end
