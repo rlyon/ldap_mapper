@@ -10,4 +10,26 @@ describe "Net::LDAP extension: " do
     ssha = Net::LDAP::Password.generate(:ssha, "password")
     ssha.should == check_password("password", ssha)
   end
+
+  it "should return a hash of values" do
+    entry = Net::LDAP::Entry.from_single_ldif_string(
+      %q{
+dn: mydn
+foo: foo
+bar: bar
+bar: baz}
+    )
+    entry.to_hash.should == {'dn' => ['mydn'], 'foo' => ['foo'], 'bar' => ['bar','baz']}
+  end
+
+  it "should return a hash of compressed values" do
+    entry = Net::LDAP::Entry.from_single_ldif_string(
+      %q{
+dn: mydn
+foo: foo
+bar: bar
+bar: baz}
+    )
+    entry.to_hash(:compress => true).should == {'dn' => 'mydn', 'foo' => 'foo', 'bar' => ['bar','baz']}
+  end
 end
