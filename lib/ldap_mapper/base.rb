@@ -135,6 +135,7 @@ module LdapMapper
         if results
           obj = self.new
           obj.import_attributes(results.first)
+          obj
         else
           nil
         end
@@ -144,10 +145,10 @@ module LdapMapper
         objs = []
         # TODO: This is just temporary.  I need to create my own search strings and use
         # the construct method for Net::LDAP::Filter
-        dn = "#{@identifier}=#{id},#{@base}"
+        dn = "#{@identifier}=#{@identifier},#{@base}"
         # Again, this is a temporary hack
         key = options.keys.first
-        attr = @mapping[key]
+        attr = @mappings[key]
         value = options[key]
         filter = Net::LDAP::Filter.send(type, attr, value)
         connection.search(:base => @base, :filter => filter, :return_result => false) do |entry|
