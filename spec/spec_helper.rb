@@ -1,4 +1,5 @@
-if ENV['COVERAGE']
+puts ENV['COVERAGE']
+if ENV['COVERAGE'] == "true"
   require 'simplecov'
   FILTER_DIRS = ['spec']
  

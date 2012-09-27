@@ -4,13 +4,8 @@ require "bundler/gem_tasks"
 
 task :default => :spec
 
-desc "Run all specs"
+desc "Run all specs. Use COVERAGE to generate coverage data."
 RSpec::Core::RakeTask.new(:spec) do |t|
   t.rspec_opts = %w{--colour --format progress}
   t.pattern = 'spec/*_spec.rb'
-end
-
-desc "Run tests with SimpleCov"
-RSpec::Core::RakeTask.new('coverage') do |t|
-  ENV['COVERAGE'] = "true"
 end

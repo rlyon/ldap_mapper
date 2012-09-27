@@ -215,7 +215,7 @@ describe "LdapMapper::Base: " do
     user.last_name.should == "User"
     user.email.should == "mock@example.com"
     user.last_change.should == Time.at(1348617600)
-    user.uid_number == 1000
+    user.uid_number.should == 1000
     user = users[1]
     user.username.should == "rock"
     user.common_name.should == "Rock User"
@@ -223,7 +223,7 @@ describe "LdapMapper::Base: " do
     user.last_name.should == "User"
     user.email.should == "rock@example.com"
     user.last_change.should == Time.at(1348617600)
-    user.uid_number == 1001
+    user.uid_number.should == 1001
     user = users[2]
     user.username.should == "sock"
     user.common_name.should == "Sock User"
@@ -231,7 +231,51 @@ describe "LdapMapper::Base: " do
     user.last_name.should == "User"
     user.email.should == "sock@example.com"
     user.last_change.should == Time.at(1348617600)
-    user.uid_number == 1002
+    user.uid_number.should == 1002
+  end
+
+  it "should return a single object from find" do
+    entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
+    LdapFakeUser.connection.expects(:search).returns(entries)
+    user = LdapFakeUser.find('test') # Doesn't really do anything since we are mocking the search
+    user.username.should == "mock"
+    user.common_name.should == "Mock User"
+    user.first_name.should == "Mock"
+    user.last_name.should == "User"
+    user.email.should == "mock@example.com"
+    user.last_change.should == Time.at(1348617600)
+    user.uid_number.should == 1000
+  end
+
+  it "should return an array of objects from where" do
+    entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
+    LdapFakeUser.connection.expects(:search).multiple_yields(*entries)
+    users = LdapFakeUser.where :eq, :username => "rlyon" # Doesn't really do anything since we are mocking the search
+    users.size.should == 3
+    user = users[0]
+    user.username.should == "mock"
+    user.common_name.should == "Mock User"
+    user.first_name.should == "Mock"
+    user.last_name.should == "User"
+    user.email.should == "mock@example.com"
+    user.last_change.should == Time.at(1348617600)
+    user.uid_number.should == 1000
+    user = users[1]
+    user.username.should == "rock"
+    user.common_name.should == "Rock User"
+    user.first_name.should == "Rock"
+    user.last_name.should == "User"
+    user.email.should == "rock@example.com"
+    user.last_change.should == Time.at(1348617600)
+    user.uid_number.should == 1001
+    user = users[2]
+    user.username.should == "sock"
+    user.common_name.should == "Sock User"
+    user.first_name.should == "Sock"
+    user.last_name.should == "User"
+    user.email.should == "sock@example.com"
+    user.last_change.should == Time.at(1348617600)
+    user.uid_number.should == 1002
   end
 
   it "should have a dn created from the base and the default identifier" do
