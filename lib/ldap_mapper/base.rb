@@ -18,6 +18,9 @@ module LdapMapper
       end
 
       def attribute(name, options = {})
+        if options[:map]
+          options[:map].downcase!
+        end
         class_eval <<-EOS, __FILE__, __LINE__
           def #{name}
             attributes[:#{name}]
@@ -119,7 +122,7 @@ module LdapMapper
       def find(id)
         # dn = "#{@identifier}=#{id},#{@base}"
         filter = Net::LDAP::Filter.eq(@identifier, id)
-        results = connection.search(:base => @base, :filter => filter) 
+        results = connection.search(:base => @base, :filter => filter)
         if results
           obj = self.new
           obj.import_attributes(results.first)
@@ -132,16 +135,16 @@ module LdapMapper
       def where(opts = :chain, *others)
         objs = []
         filter = nil
-        if opts == :chain
-          others.each do |key, value|
-            unless filter
-              filter = Net::LDAP::Filter.eq(@mappings[key], value)
-            else
-              filter = filter & Net::LDAP::Filter.eq(@mappings[key], value)
-            end
-          end
-        elsif opts == :all
+        if opts == :all
           filter = Net::LDAP::Filter.eq("objectclass", "*")
+        else
+          filter = nil
+          # opt = opts.flatten
+          # filter = Net::LDAP::Filter.eq(@mappings[opt[0]], opt[1])
+          opts.each do |key, value|
+            opt = Net::LDAP::Filter.eq(@mappings[key], value.to_s)
+            filter = filter ? filter & opt : opt
+          end
         end
 
         connection.search(:base => @base, :filter => filter, :return_result => false) do |entry|
@@ -170,11 +173,14 @@ module LdapMapper
       end
 
       def ldap_connection
-        ldap = Net::LDAP.new
-        ldap.host = LDAP_MAPPER_HOST
-        ldap.port = LDAP_MAPPER_PORT
-        ldap.auth LDAP_MAPPER_ADMIN, LDAP_MAPPER_ADMIN_PASSWORD
-        ldap
+        Net::LDAP.new(
+          :host => LDAP_MAPPER_HOST,
+          :port => LDAP_MAPPER_PORT,
+          :auth => {
+            :method => :simple,
+            :username => LDAP_MAPPER_ADMIN,
+            :password => LDAP_MAPPER_ADMIN_PASSWORD
+          })
       end
 
       def mappings

@@ -3,13 +3,14 @@ require File.dirname(__FILE__) + '/spec_helper'
 describe "LdapMapper::Base: " do
   before(:all) do
     LDAP_MAPPER_HOST="localhost"
-    LDAP_MAPPER_PORT=389
-    LDAP_MAPPER_ADMIN="cn=manager,dc=example,dc=com"
-    LDAP_MAPPER_ADMIN_PASSWORD="mysupersecretpassword"
+    LDAP_MAPPER_PORT=3897
+    LDAP_MAPPER_ADMIN="uid=admin,ou=system"
+    LDAP_MAPPER_ADMIN_PASSWORD="secret"
     @ldap_server = Ladle::Server.new(
       :quiet => true,
       :port => 3897,
-      :ldif => "./spec/files/testusers.ldif"
+      :ldif => "./spec/files/test.ldif",
+      :custom_schemas => %w(org.apache.directory.server.core.schema.bootstrap.NisSchema)
     ).start
   end
 
@@ -54,10 +55,10 @@ describe "LdapMapper::Base: " do
     @user.username_mapping.should == "uid"
     @user.common_name_mapping.should == "cn"
     @user.email_mapping.should == "mail"
-    @user.uid_number_mapping.should == "uidNumber"
-    @user.group_number_mapping.should == "gidNumber"
-    @user.last_change_mapping.should == "shadowLastChange"
-    @user.password_mapping.should == "userPassword"
+    @user.uid_number_mapping.should == "uidnumber"
+    @user.group_number_mapping.should == "gidnumber"
+    @user.last_change_mapping.should == "shadowlastchange"
+    @user.password_mapping.should == "userpassword"
   end
 
   it "should dynamically create the ldap value converters" do
@@ -139,9 +140,9 @@ describe "LdapMapper::Base: " do
       "uid" => "testuser",
       "cn" => "Test User",
       "mail" => "testuser@example.com",
-      "uidNumber" => "1000",
-      "gidNumber" => "1000",
-      "shadowLastChange" => "15609"
+      "uidnumber" => "1000",
+      "gidnumber" => "1000",
+      "shadowlastchange" => "15609"
     }
   end
 
@@ -159,9 +160,9 @@ describe "LdapMapper::Base: " do
       "uid" => "testuser",
       "cn" => "Test User",
       "mail" => "testuser@example.com",
-      "uidNumber" => "1000",
-      "gidNumber" => "1000",
-      "shadowLastChange" => "15609"
+      "uidnumber" => "1000",
+      "gidnumber" => "1000",
+      "shadowlastchange" => "15609"
     }
     @user.import_attributes(imported).should == true
     @user.attributes.should == {
@@ -213,78 +214,52 @@ describe "LdapMapper::Base: " do
   end
 
   it "should load all entries from an ldap search" do
-    # entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
-    # LdapFakeUser.connection.expects(:search).multiple_yields(*entries)
     users = LdapFakeUser.all
-    users.size.should == 3
-    user = users[0]
-    user.username.should == "mock"
-    user.common_name.should == "Mock User"
-    user.first_name.should == "Mock"
-    user.last_name.should == "User"
-    user.email.should == "mock@example.com"
-    user.last_change.should == Time.at(1348617600)
-    user.uid_number.should == 1000
-    user = users[1]
-    user.username.should == "rock"
-    user.common_name.should == "Rock User"
-    user.first_name.should == "Rock"
-    user.last_name.should == "User"
-    user.email.should == "rock@example.com"
-    user.last_change.should == Time.at(1348617600)
-    user.uid_number.should == 1001
-    user = users[2]
-    user.username.should == "sock"
-    user.common_name.should == "Sock User"
-    user.first_name.should == "Sock"
-    user.last_name.should == "User"
-    user.email.should == "sock@example.com"
-    user.last_change.should == Time.at(1348617600)
-    user.uid_number.should == 1002
+    users.size.should == 28
   end
 
   it "should return a single object from find" do
-    # entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
-    # LdapFakeUser.connection.expects(:search).returns(entries)
-    user = LdapFakeUser.find('test') # Doesn't really do anything since we are mocking the search
-    user.username.should == "mock"
-    user.common_name.should == "Mock User"
-    user.first_name.should == "Mock"
-    user.last_name.should == "User"
-    user.email.should == "mock@example.com"
-    user.last_change.should == Time.at(1348617600)
+    user = LdapFakeUser.find('aa729')
+    user.username.should == "aa729"
+    user.common_name.should == "Alexandra Adams"
+    user.first_name.should == "Alexandra"
+    user.last_name.should == "Adams"
+    user.email.should == "alexandra@example.org"
     user.uid_number.should == 1000
   end
 
   it "should return an array of objects from where" do
-    # entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
-    # LdapFakeUser.connection.expects(:search).multiple_yields(*entries)
-    users = LdapFakeUser.where :eq, :username => "rlyon" # Doesn't really do anything since we are mocking the search
-    users.size.should == 3
+    users = LdapFakeUser.where(username: "z*")
+    users.size.should == 2
+
     user = users[0]
-    user.username.should == "mock"
-    user.common_name.should == "Mock User"
-    user.first_name.should == "Mock"
-    user.last_name.should == "User"
-    user.email.should == "mock@example.com"
-    user.last_change.should == Time.at(1348617600)
-    user.uid_number.should == 1000
+    user.username.should == "zz882"
+    user.common_name.should == "Zana Zimmerman"
+    user.first_name.should == "Zana"
+    user.last_name.should == "Zimmerman"
+    user.email.should == "zana@example.org"
+    user.uid_number.should == 1025
+
     user = users[1]
-    user.username.should == "rock"
-    user.common_name.should == "Rock User"
-    user.first_name.should == "Rock"
-    user.last_name.should == "User"
-    user.email.should == "rock@example.com"
-    user.last_change.should == Time.at(1348617600)
-    user.uid_number.should == 1001
-    user = users[2]
-    user.username.should == "sock"
-    user.common_name.should == "Sock User"
-    user.first_name.should == "Sock"
-    user.last_name.should == "User"
-    user.email.should == "sock@example.com"
-    user.last_change.should == Time.at(1348617600)
-    user.uid_number.should == 1002
+    user.username.should == "zz883"
+    user.common_name.should == "Zoro Zimmerman"
+    user.first_name.should == "Zoro"
+    user.last_name.should == "Zimmerman"
+    user.email.should == "zoro@example.org"
+    user.uid_number.should == 1026
+  end
+
+  it "should return an array of objects from where" do
+    users = LdapFakeUser.where(username: "z*", uid_number: 1026)
+    users.size.should == 1
+
+    user = users[0]
+    user.username.should == "zz883"
+    user.common_name.should == "Zoro Zimmerman"
+    user.first_name.should == "Zoro"
+    user.last_name.should == "Zimmerman"
+    user.email.should == "zoro@example.org"
+    user.uid_number.should == 1026
   end
 
   it "should have a dn created from the base and the default identifier" do
@@ -294,7 +269,7 @@ describe "LdapMapper::Base: " do
 
   it "should hace a dn created from the base and the set identifier" do
     user = LdapFakeUser.new
-    user.username = "mock"
-    user.dn.should == "uid=mock,ou=people,dc=example,dc=com"
+    user.username = "aa729"
+    user.dn.should == "uid=aa729,ou=people,dc=example,dc=org"
   end
 end
