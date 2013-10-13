@@ -10,7 +10,8 @@ describe "LdapMapper::Base: " do
       :quiet => true,
       :port => 3897,
       :ldif => "./spec/files/test.ldif",
-      :custom_schemas => %w(org.apache.directory.server.core.schema.bootstrap.NisSchema)
+      :custom_schemas => %w(org.apache.directory.server.core.schema.bootstrap.NisSchema),
+      :tmpdir => "./spec/tmp"
     ).start
   end
 
