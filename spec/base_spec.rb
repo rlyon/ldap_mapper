@@ -6,6 +6,15 @@ describe "LdapMapper::Base: " do
     LDAP_MAPPER_PORT=389
     LDAP_MAPPER_ADMIN="cn=manager,dc=example,dc=com"
     LDAP_MAPPER_ADMIN_PASSWORD="mysupersecretpassword"
+    @ldap_server = Ladle::Server.new(
+      :quiet => true,
+      :port => 3897,
+      :ldif => "./spec/files/testusers.ldif"
+    ).start
+  end
+
+  after(:all) do
+    @ldap_server.stop if @ldap_server
   end
 
   before(:each) do
@@ -165,18 +174,18 @@ describe "LdapMapper::Base: " do
     }
   end
 
-  it "should import attributes from a Net::LDAP::Entry object" do
-    user = LdapFakeUser.new
-    entry = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries.first
-    user.import_attributes(entry)
-    user.username.should == "mock"
-    user.common_name.should == "Mock User"
-    user.first_name.should == "Mock"
-    user.last_name.should == "User"
-    user.email.should == "mock@example.com"
-    user.last_change.should == Time.at(1348617600)
-    user.uid_number == 1000
-  end
+  # it "should import attributes from a Net::LDAP::Entry object" do
+  #   user = LdapFakeUser.new
+  #   entry = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries.first
+  #   user.import_attributes(entry)
+  #   user.username.should == "mock"
+  #   user.common_name.should == "Mock User"
+  #   user.first_name.should == "Mock"
+  #   user.last_name.should == "User"
+  #   user.email.should == "mock@example.com"
+  #   user.last_change.should == Time.at(1348617600)
+  #   user.uid_number == 1000
+  # end
 
   it "should allow an epoch_days type to accept Time and Integer (or somthing that can be casted to an Integer)" do
     @user.last_change = "15609"
@@ -204,8 +213,8 @@ describe "LdapMapper::Base: " do
   end
 
   it "should load all entries from an ldap search" do
-    entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
-    LdapFakeUser.connection.expects(:search).multiple_yields(*entries)
+    # entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
+    # LdapFakeUser.connection.expects(:search).multiple_yields(*entries)
     users = LdapFakeUser.all
     users.size.should == 3
     user = users[0]
@@ -235,8 +244,8 @@ describe "LdapMapper::Base: " do
   end
 
   it "should return a single object from find" do
-    entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
-    LdapFakeUser.connection.expects(:search).returns(entries)
+    # entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
+    # LdapFakeUser.connection.expects(:search).returns(entries)
     user = LdapFakeUser.find('test') # Doesn't really do anything since we are mocking the search
     user.username.should == "mock"
     user.common_name.should == "Mock User"
@@ -248,8 +257,8 @@ describe "LdapMapper::Base: " do
   end
 
   it "should return an array of objects from where" do
-    entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
-    LdapFakeUser.connection.expects(:search).multiple_yields(*entries)
+    # entries = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries
+    # LdapFakeUser.connection.expects(:search).multiple_yields(*entries)
     users = LdapFakeUser.where :eq, :username => "rlyon" # Doesn't really do anything since we are mocking the search
     users.size.should == 3
     user = users[0]

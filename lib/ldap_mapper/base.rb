@@ -5,24 +5,12 @@ module LdapMapper
     end
 
     module ClassMethods
-
       def _load(marshalled)
         new(Marshal.load(marshalled))
       end
 
       def all(options = {})
-        objs = []
-        unless @base.nil?
-          filter = Net::LDAP::Filter.eq("objectclass", "*")
-          connection.search(:base => @base, :filter => filter, :return_result => false) do |entry|
-            obj = self.new
-            obj.import_attributes(entry)
-            objs << obj
-          end
-          objs
-        else
-          raise "Base not set"
-        end
+        self.where(:all)
       end
 
       def attributes
@@ -129,7 +117,7 @@ module LdapMapper
       end
 
       def find(id)
-        dn = "#{@identifier}=#{id},#{@base}"
+        # dn = "#{@identifier}=#{id},#{@base}"
         filter = Net::LDAP::Filter.eq(@identifier, id)
         results = connection.search(:base => @base, :filter => filter) 
         if results
@@ -141,22 +129,35 @@ module LdapMapper
         end
       end
 
-      def where(type, options = {})
+      def where(opts = :chain, *others)
         objs = []
-        # TODO: This is just temporary.  I need to create my own search strings and use
-        # the construct method for Net::LDAP::Filter
-        dn = "#{@identifier}=#{@identifier},#{@base}"
-        # Again, this is a temporary hack
-        key = options.keys.first
-        attr = @mappings[key]
-        value = options[key]
-        filter = Net::LDAP::Filter.send(type, attr, value)
+        filter = nil
+        if opts == :chain
+          others.each do |key, value|
+            unless filter
+              filter = Net::LDAP::Filter.eq(@mappings[key], value)
+            else
+              filter = filter & Net::LDAP::Filter.eq(@mappings[key], value)
+            end
+          end
+        elsif opts == :all
+          filter = Net::LDAP::Filter.eq("objectclass", "*")
+        end
+
         connection.search(:base => @base, :filter => filter, :return_result => false) do |entry|
           obj = self.new
           obj.import_attributes(entry)
           objs << obj
         end
         objs
+      end
+
+      def and()
+        nil
+      end
+
+      def or()
+        nil
       end
 
       def identifier(id)
