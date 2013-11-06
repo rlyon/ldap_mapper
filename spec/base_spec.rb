@@ -176,19 +176,6 @@ describe "LdapMapper::Base: " do
     }
   end
 
-  # it "should import attributes from a Net::LDAP::Entry object" do
-  #   user = LdapFakeUser.new
-  #   entry = Net::LDAP::Dataset.read_ldif(File.open('./spec/files/testusers.ldif')).to_entries.first
-  #   user.import_attributes(entry)
-  #   user.username.should == "mock"
-  #   user.common_name.should == "Mock User"
-  #   user.first_name.should == "Mock"
-  #   user.last_name.should == "User"
-  #   user.email.should == "mock@example.com"
-  #   user.last_change.should == Time.at(1348617600)
-  #   user.uid_number == 1000
-  # end
-
   it "should allow an epoch_days type to accept Time and Integer (or somthing that can be casted to an Integer)" do
     @user.last_change = "15609"
     @user.last_change.should == Time.at(1348617600)
@@ -272,5 +259,16 @@ describe "LdapMapper::Base: " do
     user = LdapFakeUser.new
     user.username = "aa729"
     user.dn.should == "uid=aa729,ou=people,dc=example,dc=org"
+  end
+
+  it "should save modifications made to a user" do
+    user = LdapFakeUser.find("dd945")
+    user.first_name.should == "Dorothy"
+
+    user.first_name = "Dot"
+    user.save
+
+    user = LdapFakeUser.find("dd945")
+    user.first_name.should == "Dot"
   end
 end
