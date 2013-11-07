@@ -17,6 +17,10 @@ module LdapMapper
         @attributes ||= []
       end
 
+      def mappings
+        @mappings ||= {}
+      end
+
       def attribute(name, options = {})
         if options[:map]
           options[:map].downcase!
@@ -30,6 +34,7 @@ module LdapMapper
         when :integer
           class_eval <<-EOS, __FILE__, __LINE__
             def #{name}=(new_#{name})
+              set_operation(:#{name}, new_#{name})
               attributes[:#{name}] = new_#{name}.to_i
             end
           EOS
@@ -41,6 +46,7 @@ module LdapMapper
         when :password
           class_eval <<-EOS, __FILE__, __LINE__
             def #{name}=(new_#{name})
+              set_operation(:#{name}, new_#{name})
               if new_#{name} =~ /^\\{SSHA\\}/
                 attributes[:#{name}] = nil
                 attributes[:#{name}_encrypted] = new_#{name}
@@ -63,6 +69,7 @@ module LdapMapper
         when :epoch_days
           class_eval <<-EOS, __FILE__, __LINE__
             def #{name}=(new_#{name})
+              set_operation(:#{name}, new_#{name})
               if new_#{name}.is_a?(Time)
                 attributes[:#{name}] = new_#{name}
               else
@@ -78,6 +85,7 @@ module LdapMapper
         else
           class_eval <<-EOS, __FILE__, __LINE__
             def #{name}=(new_#{name})
+              set_operation(:#{name}, new_#{name})
               attributes[:#{name}] = new_#{name}.to_s
             end
           EOS
@@ -210,10 +218,29 @@ module LdapMapper
       attrs.each do |key, value|
         attributes[key] = value
       end
+
+      self.class.attributes.each do |attr|
+        operations[attr] = :noop
+      end
     end
 
     def attributes
       @attributes ||= {}
+    end
+
+    def operations
+      @operations ||= {}
+    end
+
+    def set_operation(name, new_value)
+      value = attributes[:"#{name}"]
+      if value == nil
+        operations[name] = :add
+      elsif value != nil and new_value == nil
+        operations[name] = :delete
+      else
+        operations[name] = :replace
+      end
     end
 
     def base
@@ -240,6 +267,9 @@ module LdapMapper
           mapped = send("#{attr}_mapping")
           send("#{attr}=", hash[mapped]) if hash.include?(mapped)
         end
+        self.class.attributes.each do |attr|
+          operations[attr] = :noop
+        end
         true
       rescue
         #TODO handle individual exceptions
@@ -258,11 +288,23 @@ module LdapMapper
       @mappings ||= {}
     end
 
+    def generate_operations_list
+      oplist = []
+      operations.each do |attr, op|
+        unless op == :noop
+          oplist << [op, :"#{self.class.mappings[attr]}", attributes[attr]]
+        end
+      end
+      oplist
+    end
+
     def save
       # Gather objectclasses
       # Gather mapped and converted attributes
       # Create a modlist
       # Perform LDAP modify
+      oplist = []
+      connection.modify :dn => dn, :operations => generate_operations_list
     end
   end
 end

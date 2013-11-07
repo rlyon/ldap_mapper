@@ -86,6 +86,22 @@ describe "LdapMapper::Base: " do
     @user.password_convert.should == check_password("password", @user.password_encrypted)
   end
 
+  it "should set all attribute values to nil on initialization" do
+    @user.username.should == nil
+    @user.common_name.should == nil
+    @user.email.should == nil
+    @user.uid_number.should == nil
+    @user.group_number.should == nil
+    @user.last_change.should == nil
+    @user.password.should == nil
+  end
+
+  it "should set all ldap ops to :noop on initialization" do
+    %w{username common_name email uid_number group_number last_change password}.each do |attr|
+      @user.operations[:"#{attr}"].should == :noop
+    end
+  end
+
   it "should have a class method 'attributes' that is an array of all the attributes" do
     LdapTestUser.attributes.is_a?(Array).should == true
     LdapTestUser.attributes.should == [:username,:common_name,:email,:uid_number,:group_number,:last_change,:password]
@@ -259,6 +275,23 @@ describe "LdapMapper::Base: " do
     user = LdapFakeUser.new
     user.username = "aa729"
     user.dn.should == "uid=aa729,ou=people,dc=example,dc=org"
+  end
+
+  it "should change the operation to :add if the attribute is nil before setting" do
+    @user.username = "Foo"
+    @user.operations[:username].should == :add
+  end
+
+  it "should change the operation to :modify if the attribute is not nil before setting" do
+    user = LdapFakeUser.find("dd945")
+    user.first_name = "Dot"
+    user.operations[:first_name].should == :replace
+  end
+
+  it "should change the operation to :delete if the attribute is nil after setting" do
+    user = LdapFakeUser.find("dd945")
+    user.first_name = nil
+    user.operations[:first_name].should == :delete
   end
 
   it "should save modifications made to a user" do
