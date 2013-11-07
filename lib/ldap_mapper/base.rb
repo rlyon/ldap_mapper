@@ -96,17 +96,19 @@ module LdapMapper
           EOS
         end
 
-        class_eval <<-EOS, __FILE__, __LINE__
-          def self.find_by_#{name}(query)
-            where(:#{name} => query)
-          end
-        EOS
+        # class_eval <<-EOS, __FILE__, __LINE__
+        #   def self.find_by_#{name}(query)
+        #     puts "Removing to slim this down even more"
+        #     where(:#{name} => query)
+        #   end
+        # EOS
 
-        class_eval <<-EOS, __FILE__, __LINE__
-          def #{name}_mapping
-            "#{options[:map] ? options[:map] : name}"
-          end
-        EOS
+        # class_eval <<-EOS, __FILE__, __LINE__
+        #   def #{name}_mapping
+        #     puts "Deprecating"
+        #     "#{options[:map] ? options[:map] : name}"
+        #   end
+        # EOS
 
         @attributes ||= []
         @attributes |= [name]
@@ -228,21 +230,6 @@ module LdapMapper
       @attributes ||= {}
     end
 
-    def operations
-      @operations ||= {}
-    end
-
-    def set_operation(name, new_value)
-      value = attributes[:"#{name}"]
-      if value == nil
-        operations[name] = :add
-      elsif value != nil and new_value == nil
-        operations[name] = :delete
-      else
-        operations[name] = :replace
-      end
-    end
-
     def base
       raise "Base must be defined before using."
     end
@@ -259,12 +246,31 @@ module LdapMapper
       raise "Identifier must be defined before using."
     end
 
+    def mappings
+      @mappings ||= self.class.mappings
+    end
+
+    def operations
+      @operations ||= {}
+    end
+
+    def set_operation(name, new_value)
+      value = attributes[:"#{name}"]
+      if value == nil
+        operations[name] = :add
+      elsif value != nil and new_value == nil
+        operations[name] = :delete
+      else
+        operations[name] = :replace
+      end
+    end
+
     def import_attributes(entry)
       hash = entry.is_a?(Net::LDAP::Entry) ? LdapMapper::Tools.to_hash(entry,:compress => true) : entry
       begin
         self.class.attributes.each do |attr|
           #TODO should only iterate through hash array
-          mapped = send("#{attr}_mapping")
+          mapped = mappings[attr]
           send("#{attr}=", hash[mapped]) if hash.include?(mapped)
         end
         self.class.attributes.each do |attr|
@@ -279,13 +285,9 @@ module LdapMapper
 
     def mapped_and_converted_attributes
       h = self.class.attributes.inject({}) do |ret,attr|
-        ret[send("#{attr}_mapping")] = send("#{attr}_convert") unless attributes[attr].nil?
+        ret[mappings[attr]] = send("#{attr}_convert") unless attributes[attr].nil?
         ret
       end
-    end
-
-    def mappings
-      @mappings ||= {}
     end
 
     def generate_operations_list
@@ -299,10 +301,6 @@ module LdapMapper
     end
 
     def save
-      # Gather objectclasses
-      # Gather mapped and converted attributes
-      # Create a modlist
-      # Perform LDAP modify
       oplist = []
       connection.modify :dn => dn, :operations => generate_operations_list
     end

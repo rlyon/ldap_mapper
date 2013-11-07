@@ -44,22 +44,14 @@ describe "LdapMapper::Base: " do
     @user.public_methods.include?(:"password_encrypted").should == true
   end
 
-  it "should dynamically create the mapper methods" do
-    @user.public_methods.include?(:"username_mapping").should == true
-    @user.public_methods.include?(:"common_name_mapping").should == true
-    @user.public_methods.include?(:"email_mapping").should == true
-    @user.public_methods.include?(:"uid_number_mapping").should == true
-    @user.public_methods.include?(:"group_number_mapping").should == true
-    @user.public_methods.include?(:"last_change_mapping").should == true
-    @user.public_methods.include?(:"password_mapping").should == true
-
-    @user.username_mapping.should == "uid"
-    @user.common_name_mapping.should == "cn"
-    @user.email_mapping.should == "mail"
-    @user.uid_number_mapping.should == "uidnumber"
-    @user.group_number_mapping.should == "gidnumber"
-    @user.last_change_mapping.should == "shadowlastchange"
-    @user.password_mapping.should == "userpassword"
+  it "should dynamically create the mappings back to LDAP" do
+    @user.mappings[:username].should == 'uid'
+    @user.mappings[:common_name].should == 'cn'
+    @user.mappings[:email].should == 'mail'
+    @user.mappings[:uid_number].should == 'uidnumber'
+    @user.mappings[:group_number].should == 'gidnumber'
+    @user.mappings[:last_change].should == 'shadowlastchange'
+    @user.mappings[:password].should == 'userpassword'
   end
 
   it "should dynamically create the ldap value converters" do
