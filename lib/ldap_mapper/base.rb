@@ -96,20 +96,6 @@ module LdapMapper
           EOS
         end
 
-        # class_eval <<-EOS, __FILE__, __LINE__
-        #   def self.find_by_#{name}(query)
-        #     puts "Removing to slim this down even more"
-        #     where(:#{name} => query)
-        #   end
-        # EOS
-
-        # class_eval <<-EOS, __FILE__, __LINE__
-        #   def #{name}_mapping
-        #     puts "Deprecating"
-        #     "#{options[:map] ? options[:map] : name}"
-        #   end
-        # EOS
-
         @attributes ||= []
         @attributes |= [name]
         @mappings ||= {}
