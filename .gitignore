@@ -17,3 +17,4 @@ test/version_tmp
 tmp
 coverage
 vendor
+.DS_Store
