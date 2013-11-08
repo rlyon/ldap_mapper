@@ -2,6 +2,7 @@ require "net/ldap"
 require "base64"
 require "ldap_mapper/version"
 require "ldap_mapper/base"
+require "ldap_mapper/filter"
 require "ldap_mapper/tools"
 
 module LdapMapper

@@ -5,10 +5,6 @@ module LdapMapper
     end
 
     module ClassMethods
-      def _load(marshalled)
-        new(Marshal.load(marshalled))
-      end
-
       def all(options = {})
         self.where(:all)
       end
@@ -151,14 +147,6 @@ module LdapMapper
         objs
       end
 
-      def and()
-        nil
-      end
-
-      def or()
-        nil
-      end
-
       def identifier(id)
         class_eval <<-EOS, __FILE__, __LINE__
           def identifier
@@ -287,7 +275,6 @@ module LdapMapper
     end
 
     def save
-      oplist = []
       connection.modify :dn => dn, :operations => generate_operations_list
     end
   end
