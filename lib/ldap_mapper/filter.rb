@@ -8,7 +8,6 @@ module LdapMapper
       else
         @rhs = rhs.first
       end
-      puts @rhs.inspect
     end
 
     def to_rfc2254
