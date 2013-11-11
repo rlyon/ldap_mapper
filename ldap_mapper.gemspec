@@ -22,5 +22,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "simplecov"
   gem.add_development_dependency "ladle"
 
-  gem.add_runtime_dependency "net-ldap" 
+  gem.add_runtime_dependency "net-ldap"
+  gem.add_dependency 'activemodel',   ">= 3.0.0"
+  gem.add_dependency 'activesupport',   ">= 3.0"
 end

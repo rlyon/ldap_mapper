@@ -16,6 +16,28 @@ objectClass: top
 objectClass: organizationalUnit
 ou: people
 
+dn: ou=groups,dc=example,dc=org
+objectClass: top
+objectClass: organizationalUnit
+ou: group
+
+dn: cn=staff,ou=groups,dc=example,dc=org
+objectClass: posixGroup
+objectClass: top
+cn: staff
+description: Company staff
+gidNumber: 1000
+
+dn: cn=admin,ou=groups,dc=example,dc=org
+objectClass: posixGroup
+objectClass: top
+cn: admin
+description: Company administrators
+gidNumber: 1001
+memberUid: aa729
+memberUid: bb459
+memberUid: cc414
+
 dn: uid=aa729,ou=people,dc=example,dc=org
 objectClass: person
 objectClass: organizationalPerson

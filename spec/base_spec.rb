@@ -1,6 +1,8 @@
 require File.dirname(__FILE__) + '/spec_helper'
 
 describe "LdapMapper::Base: " do
+  it_behaves_like "ActiveModel"
+  
   before(:all) do
     LDAP_MAPPER_HOST="localhost"
     LDAP_MAPPER_PORT=3897
@@ -211,7 +213,7 @@ describe "LdapMapper::Base: " do
 
   it "should load all entries from an ldap search" do
     users = LdapFakeUser.all
-    users.size.should == 28
+    users.size.should == 27
   end
 
   it "should return a single object from find" do
@@ -295,5 +297,28 @@ describe "LdapMapper::Base: " do
 
     user = LdapFakeUser.find("dd945")
     user.first_name.should == "Dot"
+  end
+
+  it "should contain two groups" do
+    groups = LdapFakeGroup.all
+    groups.size.should == 2
+  end
+
+  it "should contain a members array in the sysad group" do
+    group = LdapFakeGroup.find('admin')
+    group.members.is_a?(Array).should == true
+    group.members.size.should == 3
+  end
+  
+  it "should set and save the members array in groups" do
+    group = LdapFakeGroup.find('admin')
+    group.members << "dd945"
+    group.operations[:members].should == :replace
+    group.save
+
+    group = LdapFakeGroup.find('admin')
+    group.members.size.should == 4
+    group.members.include?("dd945").should == true
+    puts group.inspect
   end
 end

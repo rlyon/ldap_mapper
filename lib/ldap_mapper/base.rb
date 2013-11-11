@@ -1,187 +1,17 @@
 module LdapMapper
   module Base
-    def self.included(base)
-      base.extend(ClassMethods)
-    end
+    extend ActiveSupport::Concern
+    extend Plugins
 
-    module ClassMethods
-      def all(options = {})
-        self.where(:all)
-      end
+    include Plugins::ActiveModel
+    include Plugins::Query
+    include Plugins::Attributes
+    include Plugins::ObjectClasses
+    include Plugins::Base
+    include Plugins::Identifier
 
-      def attributes
-        @attributes ||= []
-      end
-
-      def mappings
-        @mappings ||= {}
-      end
-
-      def attribute(name, options = {})
-        if options[:map]
-          options[:map].downcase!
-        end
-        class_eval <<-EOS, __FILE__, __LINE__
-          def #{name}
-            attributes[:#{name}]
-          end
-        EOS
-        case options[:type]
-        when :integer
-          class_eval <<-EOS, __FILE__, __LINE__
-            def #{name}=(new_#{name})
-              set_operation(:#{name}, new_#{name})
-              attributes[:#{name}] = new_#{name}.to_i
-            end
-          EOS
-          class_eval <<-EOS, __FILE__, __LINE__
-            def #{name}_convert
-              attributes[:#{name}].to_s
-            end
-          EOS
-        when :password
-          class_eval <<-EOS, __FILE__, __LINE__
-            def #{name}=(new_#{name})
-              set_operation(:#{name}, new_#{name})
-              if new_#{name} =~ /^\\{SSHA\\}/
-                attributes[:#{name}] = nil
-                attributes[:#{name}_encrypted] = new_#{name}
-              else
-                attributes[:#{name}] = new_#{name}
-                attributes[:#{name}_encrypted] = Net::LDAP::Password.generate(:ssha, new_#{name})
-              end
-            end
-          EOS
-          class_eval <<-EOS, __FILE__, __LINE__
-            def #{name}_encrypted
-              attributes[:#{name}_encrypted]
-            end
-          EOS
-          class_eval <<-EOS, __FILE__, __LINE__
-            def #{name}_convert
-              attributes[:#{name}_encrypted]
-            end
-          EOS
-        when :epoch_days
-          class_eval <<-EOS, __FILE__, __LINE__
-            def #{name}=(new_#{name})
-              set_operation(:#{name}, new_#{name})
-              if new_#{name}.is_a?(Time)
-                attributes[:#{name}] = new_#{name}
-              else
-                attributes[:#{name}] = new_#{name}.to_i.epoch_days
-              end
-            end
-          EOS
-          class_eval <<-EOS, __FILE__, __LINE__
-            def #{name}_convert
-              attributes[:#{name}].to_epoch_days.to_s
-            end
-          EOS
-        else
-          class_eval <<-EOS, __FILE__, __LINE__
-            def #{name}=(new_#{name})
-              set_operation(:#{name}, new_#{name})
-              attributes[:#{name}] = new_#{name}.to_s
-            end
-          EOS
-          class_eval <<-EOS, __FILE__, __LINE__
-            def #{name}_convert
-              attributes[:#{name}]
-            end
-          EOS
-        end
-
-        @attributes ||= []
-        @attributes |= [name]
-        @mappings ||= {}
-        @mappings[name] = options[:map] ? options[:map] : name
-      end
-
-      def base(type)
-        class_eval <<-EOS, __FILE__, __LINE__
-          def base
-            "#{type.to_s}"
-          end
-        EOS
-        @base = type.to_s
-      end
-
-      def connection
-        @conn ||= ldap_connection
-      end
-
-      def find(id)
-        # dn = "#{@identifier}=#{id},#{@base}"
-        filter = Net::LDAP::Filter.eq(@identifier, id)
-        results = connection.search(:base => @base, :filter => filter)
-        if results
-          obj = self.new
-          obj.import_attributes(results.first)
-          obj
-        else
-          nil
-        end
-      end
-
-      def where(opts = :chain, *others)
-        objs = []
-        filter = nil
-        if opts == :all
-          filter = Net::LDAP::Filter.eq("objectclass", "*")
-        else
-          filter = nil
-          # opt = opts.flatten
-          # filter = Net::LDAP::Filter.eq(@mappings[opt[0]], opt[1])
-          opts.each do |key, value|
-            opt = Net::LDAP::Filter.eq(@mappings[key], value.to_s)
-            filter = filter ? filter & opt : opt
-          end
-        end
-
-        connection.search(:base => @base, :filter => filter, :return_result => false) do |entry|
-          obj = self.new
-          obj.import_attributes(entry)
-          objs << obj
-        end
-        objs
-      end
-
-      def identifier(id)
-        class_eval <<-EOS, __FILE__, __LINE__
-          def identifier
-            "#{id.to_s}"
-          end
-        EOS
-        @identifier = id
-      end
-
-      def ldap_connection
-        Net::LDAP.new(
-          :host => LDAP_MAPPER_HOST,
-          :port => LDAP_MAPPER_PORT,
-          :auth => {
-            :method => :simple,
-            :username => LDAP_MAPPER_ADMIN,
-            :password => LDAP_MAPPER_ADMIN_PASSWORD
-          })
-      end
-
-      def mappings
-        @mappings ||= {}
-      end
-
-      def objectclasses
-        @objectclasses ||= []
-      end
-
-      def objectclass(name)
-        objectclasses << name 
-      end
-
-      def reverse_map
-        @inverted_mappings ||= @mappings.invert
-      end
+    included do
+      extend Plugins
     end
 
     ####
@@ -190,7 +20,6 @@ module LdapMapper
     ####
     ####
     def initialize(attrs={})
-      @conn = self.class.connection
       attrs.each do |key, value|
         attributes[key] = value
       end
@@ -204,12 +33,17 @@ module LdapMapper
       @attributes ||= {}
     end
 
-    def base
-      raise "Base must be defined before using."
+    def connection(ldap_connection = nil)
+      if ldap_connection.nil? and LdapMapper.connection
+        @connection ||= LdapMapper.connection
+      else
+        @connection = ldap_connection
+      end
+      @connection
     end
 
-    def connection
-      @conn ||= self.class.connection
+    def base
+      raise "Base must be defined before using."
     end
 
     def dn
