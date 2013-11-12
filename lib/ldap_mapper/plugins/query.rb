@@ -2,29 +2,24 @@ module LdapMapper
   module Plugins
     module Query
       extend ActiveSupport::Concern
+      extend LdapMapper::Tools
+
+      included do
+        extend ActiveSupport::DescendantsTracker
+        extend LdapMapper::Tools
+      end
 
       module ClassMethods
-        def connection(ldap_connection = nil)
-          if ldap_connection.nil? and LdapMapper.connection
-            @connection ||= LdapMapper.connection
-          else
-            @connection = ldap_connection
-          end
-          @connection
-        end
-
         def all(options = {})
           self.where(:all)
         end
 
         def find(id)
-          # dn = "#{@identifier}=#{id},#{@base}"
           filter = Net::LDAP::Filter.eq(@identifier, id)
-          results = connection.search(:base => @base, :filter => filter)
+          results = connection.search(:base => @basedn, :filter => filter)
           if results
-            obj = self.new
-            obj.import_attributes(results.first)
-            obj
+            attrs = import(results.first)
+            self.new(attrs)
           else
             nil
           end
@@ -45,13 +40,32 @@ module LdapMapper
             end
           end
 
-          connection.search(:base => @base, :filter => filter, :return_result => false) do |entry|
-            obj = self.new
-            obj.import_attributes(entry)
-            objs << obj
+          connection.search(:base => @basedn, :filter => filter, :return_result => false) do |entry|
+            attrs = import(entry)
+            objs << self.new(attrs)
           end
           objs
         end
+
+        def import(entry)
+          attrs = {}
+          self.attributes.each do |attr|
+            mapped_attr = mappings[attr]
+            type = types[attr]
+            unless entry[mapped_attr].nil?
+              unless type == :array
+                value = convert(type, entry[mapped_attr].first)
+              else
+                value = convert(type, entry[mapped_attr])
+              end
+              attrs[attr] = value
+            else
+              attrs[attr] = nil
+            end
+          end
+          attrs
+        end
+
       end
     end
   end

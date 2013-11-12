@@ -1,6 +1,6 @@
 class LdapFakeUser
   include LdapMapper::Base
-  base "ou=people,dc=example,dc=org"
+  basedn "ou=people,dc=example,dc=org"
   identifier "uid"
   objectclass "top"
   objectclass "person"
@@ -19,7 +19,7 @@ end
 
 class LdapFakeGroup
   include LdapMapper::Base
-  base "ou=groups,dc=example,dc=org"
+  basedn "ou=groups,dc=example,dc=org"
   identifier "cn"
   objectclass "top"
   objectclass "posixGroup"
@@ -31,7 +31,7 @@ end
 
 class LdapTestUser
   include LdapMapper::Base
-  base "ou=test,dc=example,dc=org"
+  basedn "ou=test,dc=example,dc=org"
   objectclass "posixAccount"
   objectclass "shadowAccount"
   objectclass "inetOrgPerson"

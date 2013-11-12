@@ -1,7 +1,11 @@
 module LdapMapper
   module Plugins
     module Attributes
-      include ActiveSupport::Concern
+      extend ActiveSupport::Concern
+
+      included do
+        extend ActiveSupport::DescendantsTracker
+      end
 
       module ClassMethods
         def attributes
@@ -10,6 +14,10 @@ module LdapMapper
 
         def mappings
           @mappings ||= {}
+        end
+
+        def types
+          @types ||= {}
         end
 
         def attribute(name, options = {})
@@ -23,10 +31,8 @@ module LdapMapper
           @attributes |= [name]
           @mappings ||= {}
           @mappings[name] = options[:map] ? options[:map] : name
-        end
-
-        def mappings
-          @mappings ||= {}
+          @types ||= {}
+          @types[name] = options[:type]
         end
 
         def reverse_map
@@ -58,7 +64,6 @@ module LdapMapper
         def create_integer_getters_for(name)
           class_eval <<-EOS, __FILE__, __LINE__
             def #{name}=(new_#{name})
-              set_operation(:#{name}, new_#{name})
               attributes[:#{name}] = new_#{name}.to_i
             end
           EOS
@@ -72,7 +77,6 @@ module LdapMapper
         def create_password_getters_for(name)
           class_eval <<-EOS, __FILE__, __LINE__
             def #{name}=(new_#{name})
-              set_operation(:#{name}, new_#{name})
               if new_#{name} =~ /^\\{SSHA\\}/
                 attributes[:#{name}] = nil
                 attributes[:#{name}_encrypted] = new_#{name}
@@ -97,7 +101,6 @@ module LdapMapper
         def create_epoch_days_getters_for(name)
           class_eval <<-EOS, __FILE__, __LINE__
             def #{name}=(new_#{name})
-              set_operation(:#{name}, new_#{name})
               if new_#{name}.is_a?(Time)
                 attributes[:#{name}] = new_#{name}
               else
@@ -115,7 +118,6 @@ module LdapMapper
         def create_array_getters_for(name)
           class_eval <<-EOS, __FILE__, __LINE__
             def #{name}=(new_#{name})
-              set_operation(:#{name}, new_#{name})
               unless new_#{name}.is_a?(Array)
                 raise "You must pass an array when assigning to #{name}"
               else
@@ -133,7 +135,6 @@ module LdapMapper
         def create_string_getters_for(name)
           class_eval <<-EOS, __FILE__, __LINE__
             def #{name}=(new_#{name})
-              set_operation(:#{name}, new_#{name})
               attributes[:#{name}] = new_#{name}.to_s
             end
           EOS
@@ -144,6 +145,69 @@ module LdapMapper
           EOS
         end
       end
+
+      def attributes
+        @attributes ||= {}
+      end
+
+      def orig_attributes
+        @orig_attributes ||= {}
+      end
+
+      def identifier
+        raise "Identifier must be defined before using."
+      end
+
+      def mappings
+        @mappings ||= self.class.mappings
+      end
+
+      def types
+        @types ||= self.class.types
+      end
+
+      def operations
+        @operations ||= {}
+      end
+
+      def operation(name)
+        value = attributes[name]
+        orig = orig_attributes[name]
+        unless orig.nil?
+          if value == orig
+            :noop
+          elsif value.nil? || value.empty?
+            :delete
+          else
+            :replace
+          end
+        else
+          if value.nil? || value.empty?
+            :noop
+          else
+            :add
+          end
+        end
+      end
+
+      def generate_operations_list
+        oplist = []
+        attributes.keys.each do |attr|
+          op = operation(attr)
+          unless op == :noop
+            oplist << [op, :"#{self.class.mappings[attr]}", attributes[attr]]
+          end
+        end
+        oplist
+      end
+
+      # def mapped_and_converted_attributes
+      #   h = self.class.attributes.inject({}) do |ret,attr|
+      #     ret[mappings[attr]] = send("#{attr}_convert") unless attributes[attr].nil?
+      #     ret
+      #   end
+      # end
+
     end
   end
 end
