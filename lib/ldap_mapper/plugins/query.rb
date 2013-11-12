@@ -32,8 +32,6 @@ module LdapMapper
             filter = Net::LDAP::Filter.eq(@identifier, "*")
           else
             filter = nil
-            # opt = opts.flatten
-            # filter = Net::LDAP::Filter.eq(@mappings[opt[0]], opt[1])
             opts.each do |key, value|
               opt = Net::LDAP::Filter.eq(@mappings[key], value.to_s)
               filter = filter ? filter & opt : opt

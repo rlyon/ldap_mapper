@@ -321,4 +321,12 @@ describe "LdapMapper::Base: " do
     group.members.size.should == 4
     group.members.include?("dd945").should == true
   end
+
+  # it "should return an empty array if there are no results returned." do
+  #   groups = LdapFakeGroup.where(:common_name => "foogroup")
+  #   groups.size.should == 0
+
+  #   user = LdapFakeUser.find("foouser")
+  #   user should be_nil
+  # end
 end

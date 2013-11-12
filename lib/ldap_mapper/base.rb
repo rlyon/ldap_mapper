@@ -43,6 +43,5 @@ module LdapMapper
     def save
       connection.modify :dn => dn, :operations => generate_operations_list
     end
-
   end
 end
