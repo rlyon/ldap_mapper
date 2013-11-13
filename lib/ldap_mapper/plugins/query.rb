@@ -2,11 +2,9 @@ module LdapMapper
   module Plugins
     module Query
       extend ActiveSupport::Concern
-      extend LdapMapper::Tools
 
       included do
         extend ActiveSupport::DescendantsTracker
-        extend LdapMapper::Tools
       end
 
       module ClassMethods
@@ -14,15 +12,24 @@ module LdapMapper
           self.where(:all)
         end
 
+        def connection(ldap_connection = nil)
+          if ldap_connection.nil? and LdapMapper.connection
+            @connection ||= LdapMapper.connection
+          else
+            @connection = ldap_connection
+          end
+          @connection
+        end
+
         def find(id)
           filter = Net::LDAP::Filter.eq(@identifier, id)
-          results = connection.search(:base => @basedn, :filter => filter)
-          if results
-            attrs = import(results.first)
-            self.new(attrs)
-          else
-            nil
-          end
+          results = connection.search(:base => @basedn, :filter => filter, :size => 1)
+
+          raise OperationError, connection.get_operation_result.message if results.nil?
+          raise RecordNotFound, "The requested record was not found." if results.empty?
+
+          attrs = import(results.first)
+          self.new(attrs, :existing)
         end
 
         def where(opts = :chain, *others)
@@ -31,17 +38,17 @@ module LdapMapper
           if opts == :all
             filter = Net::LDAP::Filter.eq(@identifier, "*")
           else
-            filter = nil
             opts.each do |key, value|
               opt = Net::LDAP::Filter.eq(@mappings[key], value.to_s)
               filter = filter ? filter & opt : opt
             end
           end
 
-          connection.search(:base => @basedn, :filter => filter, :return_result => false) do |entry|
+          result = connection.search(:base => @basedn, :filter => filter, :return_result => false) do |entry|
             attrs = import(entry)
-            objs << self.new(attrs)
+            objs << self.new(attrs, :existing)
           end
+          raise OperationError, connection.get_operation_result.message unless result
           objs
         end
 
@@ -52,9 +59,9 @@ module LdapMapper
             type = types[attr]
             unless entry[mapped_attr].nil?
               unless type == :array
-                value = convert(type, entry[mapped_attr].first)
+                value = cast(type, entry[mapped_attr].first)
               else
-                value = convert(type, entry[mapped_attr])
+                value = cast(type, entry[mapped_attr])
               end
               attrs[attr] = value
             else
@@ -63,7 +70,38 @@ module LdapMapper
           end
           attrs
         end
+      end
 
+      def connection
+        self.class.connection
+      end
+
+      def dn
+        "#{self.identifier}=#{attributes[self.class.reverse_map[self.identifier]]},#{self.basedn}"
+      end
+
+      def generate_operations_list
+        oplist = []
+        attributes.keys.each do |attr|
+          op = operations[attr]
+          unless op == :noop
+            oplist << [op, :"#{self.class.mappings[attr]}", convert(types[attr], attributes[attr])]
+          end
+        end
+        oplist
+      end
+
+      def save
+        return unless @_state == :modified
+        connection.modify :dn => dn, :operations => generate_operations_list
+      end
+
+      def destroy
+        delete
+      end
+
+      def delete
+        connection.delete :dn => dn
       end
     end
   end

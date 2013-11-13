@@ -2,46 +2,28 @@ module LdapMapper
   module Base
     extend ActiveSupport::Concern
     extend Plugins
+    extend Tools
 
+    include Plugins::ActiveModel
     include Plugins::Attributes
     include Plugins::BaseDn
-    include Plugins::ActiveModel
-    include Plugins::Query
-    include Plugins::ObjectClasses
     include Plugins::Identifier
+    include Plugins::ObjectClasses
+    include Plugins::Query
 
     included do
       extend Plugins
+      extend Tools
     end
 
-    module ClassMethods
-      def connection(ldap_connection = nil)
-        if ldap_connection.nil? and LdapMapper.connection
-          @connection ||= LdapMapper.connection
-        else
-          @connection = ldap_connection
-        end
-        @connection
-      end
-    end
-
-    def initialize(attrs = {})
+    include Tools
+    VALID_STATES = [:new, :existing, :modified]
+    def initialize(attrs = {}, state = :new)
       attrs.each do |key, value|
         attributes[key] = value
-        orig_attributes[key] = value
+        ldap_attributes[key] = value if state == :existing
       end
-    end
-
-    def connection
-      self.class.connection
-    end
-
-    def dn
-      "#{self.identifier}=#{attributes[self.class.reverse_map[self.identifier]]},#{self.basedn}"
-    end
-
-    def save
-      connection.modify :dn => dn, :operations => generate_operations_list
+      @_state = state
     end
   end
 end
