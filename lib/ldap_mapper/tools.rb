@@ -5,7 +5,7 @@ module LdapMapper
       when :array
         value
       when :epoch_days
-        value.to_i.epoch_days
+        value.to_i.epoch_days.to_s
       else
         value.to_s
       end
@@ -25,8 +25,9 @@ module LdapMapper
         else
           value.to_i.epoch_days
         end
+      # FIXME: this is crap it is not flexible to other hashing methods
       when :password
-        if value =~ /^\\{SSHA\\}/
+        if value =~ /^\{[A-Za-z]+\}/
           value.to_s
         else
           Net::LDAP::Password.generate(:ssha, value)

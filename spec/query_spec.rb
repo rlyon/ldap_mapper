@@ -157,4 +157,51 @@ describe "LdapMapper::Plugins::Query: " do
       e.message.should == "The requested record was not found."
     }
   end
+
+  it "should generate an add list" do
+    user = LdapFakeUser.new(
+      :username => "joep",
+      :common_name => "Joe Plumber",
+      :first_name => "Joe",
+      :last_name => "Plumber",
+      :uid_number => 9998,
+      :primary_group => 1000,
+      :email => "joep@example.org",
+      :password => "password"
+    )
+    attr_hash = user.generate_add_list
+    attr_hash[:uid].should == "joep"
+    attr_hash[:cn].should == "Joe Plumber"
+    attr_hash[:givenname].should == "Joe"
+    attr_hash[:sn].should == "Plumber"
+    attr_hash[:uidnumber].should == "9998"
+    attr_hash[:gidnumber].should == "1000"
+    attr_hash[:mail].should == "joep@example.org"
+    attr_hash[:userpassword].should == check_password("password", user.password)
+  end
+
+  it "should create a new entry on save" do
+    user = LdapFakeUser.new(
+      :username => "joep",
+      :common_name => "Joe Plumber",
+      :first_name => "Joe",
+      :last_name => "Plumber",
+      :uid_number => 9998,
+      :primary_group => 1000,
+      :email => "joep@example.org",
+      :password => "password",
+      :home => "/dev/null"
+    )
+    user.save
+    user = LdapFakeUser.find("joep")
+    user.username.should == "joep"
+    user.common_name.should == "Joe Plumber"
+    user.first_name.should == "Joe"
+    user.last_name.should == "Plumber"
+    user.uid_number.should == 9998
+    user.primary_group.should == 1000
+    user.email.should == "joep@example.org"
+    user.password.should == check_password("password", user.password)
+    user.home.should == "/dev/null"
+  end
 end

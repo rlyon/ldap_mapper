@@ -17,10 +17,12 @@ module LdapMapper
     end
 
     include Tools
+
     VALID_STATES = [:new, :existing, :modified]
+    
     def initialize(attrs = {}, state = :new)
       attrs.each do |key, value|
-        attributes[key] = value
+        attributes[key] = cast(types[key], value)
         ldap_attributes[key] = value if state == :existing
       end
       @_state = state

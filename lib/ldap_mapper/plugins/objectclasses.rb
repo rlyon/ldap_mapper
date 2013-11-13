@@ -16,6 +16,10 @@ module LdapMapper
           objectclasses << name 
         end
       end
+
+      def objectclasses
+        @objectclasses ||= self.class.objectclasses
+      end
     end
   end
 end

@@ -27,7 +27,6 @@ module LdapMapper
 
           raise OperationError, connection.get_operation_result.message if results.nil?
           raise RecordNotFound, "The requested record was not found." if results.empty?
-
           attrs = import(results.first)
           self.new(attrs, :existing)
         end
@@ -80,7 +79,7 @@ module LdapMapper
         "#{self.identifier}=#{attributes[self.class.reverse_map[self.identifier]]},#{self.basedn}"
       end
 
-      def generate_operations_list
+      def generate_modify_list
         oplist = []
         attributes.keys.each do |attr|
           op = operations[attr]
@@ -91,9 +90,38 @@ module LdapMapper
         oplist
       end
 
+      def generate_add_list
+        attrs = { :objectclass => objectclasses }
+        self.class.attributes.each do |attr|
+          mapped = mappings[attr]
+          attrs[:"#{mapped}"] = convert(types[attr], attributes[attr])
+        end
+        attrs
+      end
+
       def save
-        return unless @_state == :modified
-        connection.modify :dn => dn, :operations => generate_operations_list
+        create_or_update
+      end
+
+      def create_or_update
+        case @_state
+        when :modified
+          update
+        when :new
+          create
+        end        
+      end
+
+      def create
+        connection.add(:dn => dn, :attributes => generate_add_list)
+        result = connection.get_operation_result
+        raise OperationError, "Unable to create: #{result.message}" unless result.code == 0
+      end
+
+      def update
+        connection.modify :dn => dn, :operations => generate_modify_list
+        result = connection.get_operation_result
+        raise OperationError, "Unable to update: #{result.message}" unless result.code == 0
       end
 
       def destroy

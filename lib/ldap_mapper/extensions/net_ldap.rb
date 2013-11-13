@@ -14,7 +14,7 @@ class Net::LDAP::Password
         digest << str.to_s
         "{SHA}" + [digest.digest].pack('m').chomp
       when :ssha
-        salt = String.random :length => 8 unless salt
+        salt = String.random :length => 20 unless salt
         "{SSHA}"+Base64.encode64(Digest::SHA1.digest(str+salt)+salt).gsub(/\n/, '')
       else
         raise Net::LDAP::LdapError, "Unsupported password-hash type (#{type})"

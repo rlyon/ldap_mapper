@@ -2,7 +2,6 @@ class LdapFakeUser
   include LdapMapper::Base
   basedn "ou=people,dc=example,dc=org"
   identifier "uid"
-  objectclass "top"
   objectclass "person"
   objectclass "organizationalPerson"
   objectclass "inetOrgPerson"
@@ -15,6 +14,7 @@ class LdapFakeUser
   attribute :primary_group, :map => "gidNumber", :type => :integer
   attribute :email,         :map => "mail"
   attribute :password,      :map => "userPassword", :type => :password
+  attribute :home,          :map => "homedirectory"
 end
 
 class LdapFakeGroup
