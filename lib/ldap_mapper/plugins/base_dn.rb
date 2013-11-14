@@ -16,6 +16,10 @@ module LdapMapper
           EOS
           @basedn = type.to_s
         end
+
+        def prefix
+          @basedn
+        end
       end
 
       def basedn

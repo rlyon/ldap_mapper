@@ -16,6 +16,10 @@ module LdapMapper
           @mappings ||= {}
         end
 
+        def reverse_mappings
+          @reverse_mappings ||= [Hash[mappings.to_a.reverse]]
+        end
+
         def types
           @types ||= {}
         end

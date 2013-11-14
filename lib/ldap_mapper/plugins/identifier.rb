@@ -16,6 +16,10 @@ module LdapMapper
           EOS
           @identifier = id
         end
+
+        def default_id
+          @identifier
+        end
       end
     end
   end

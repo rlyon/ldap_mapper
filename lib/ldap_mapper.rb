@@ -1,18 +1,20 @@
 require "net/ldap"
 require "base64"
-require "ldap_mapper/filter"
 require 'active_support/core_ext'
 require 'active_model'
 
 module LdapMapper
-  autoload :Error,            'ldap_mapper/exceptions'
-  autoload :RecordNotFound,   'ldap_mapper/exceptions'
-  autoload :ConnectionError,  'ldap_mapper/exceptions'
-  autoload :OperationError,   'ldap_mapper/exceptions'
-  autoload :Connection,       'ldap_mapper/connection'
-  autoload :Base,             'ldap_mapper/base'
-  autoload :Tools,            'ldap_mapper/tools'
-  autoload :VERSION,          'ldap_mapper/version'
+  autoload :Error,              'ldap_mapper/exceptions'
+  autoload :RecordNotFound,     'ldap_mapper/exceptions'
+  autoload :ConnectionError,    'ldap_mapper/exceptions'
+  autoload :OperationError,     'ldap_mapper/exceptions'
+  autoload :NotAuthorizedError, 'ldap_mapper/exceptions'
+  autoload :InvalidOptionError, 'ldap_mapper/exceptions'
+  autoload :Connection,         'ldap_mapper/connection'
+  autoload :Base,               'ldap_mapper/base'
+  autoload :Authenticatable,    'ldap_mapper/authenticatable'
+  autoload :Tools,              'ldap_mapper/tools'
+  autoload :VERSION,            'ldap_mapper/version'
 
   module Plugins
     autoload :Query,          'ldap_mapper/plugins/query'
