@@ -14,7 +14,7 @@ module LdapMapper
   autoload :Base,               'ldap_mapper/base'
   autoload :Authenticatable,    'ldap_mapper/authenticatable'
   autoload :Tools,              'ldap_mapper/tools'
-  autoload :VERSION,            'ldap_mapper/version'
+  autoload :Version,            'ldap_mapper/version'
 
   module Plugins
     autoload :Query,          'ldap_mapper/plugins/query'
