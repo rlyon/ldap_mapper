@@ -1,5 +1,6 @@
 # LdapMapper
 [![Build Status](https://secure.travis-ci.org/rlyon/ldap_mapper.png)](http://travis-ci.org/rlyon/ldap_mapper)
+[![Coverage Status](https://coveralls.io/repos/rlyon/ldap_mapper/badge.png)](https://coveralls.io/r/rlyon/ldap_mapper)
 
 TODO: Write a gem description
 
